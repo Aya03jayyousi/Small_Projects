@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعبة اختبار الذاكرة</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="game-container">
+    <div id="attempts">محاولات: 0</div>
+    <div class="card-grid" id="card-grid">
+    </div>
+</div>
+
+<div id="winModal" class="modal">
+    <div class="modal-content">
+        <h2>🎉!أحسنت لقد وجدت الحل </h2>
+        <button class="button" onclick="closeModal()">إغلاق</button>
+        <button class="button" onclick="restartGame()">إعادة المحاولة</button>
+    </div>
+</div>
+
+<script>
+    const icons = ['🍎', '🍌', '🍇', '🍒', '🍉', '🍍', '🥝', '🍓'];
+    let cards = [...icons, ...icons];
+
+    let attempts = 0;
+    let firstCard, secondCard;
+    let lockBoard = false;
+
+    function createBoard() {
+        shuffle(cards); 
+        const cardGrid = document.getElementById('card-grid');
+        cardGrid.innerHTML = ''; 
+
+        cards.forEach(icon => {
+            const card = document.createElement('div');
+            card.classList.add('card');
+            card.dataset.icon = icon;
+            card.addEventListener('click', () => flipCard(card));
+            cardGrid.appendChild(card);
+        });
+
+        showAllCardsTemporarily();
+    }
+
+    function showAllCardsTemporarily() {
+        const allCards = document.querySelectorAll('.card');
+        allCards.forEach(card => {
+            card.classList.add('flipped');
+            card.textContent = card.dataset.icon;
+        });
+
+        setTimeout(() => {
+            allCards.forEach(card => {
+                card.classList.remove('flipped');
+                card.textContent = '';
+            });
+        }, 3000); 
+    }
+
+    function flipCard(card) {
+        if (lockBoard || card === firstCard) return;
+
+        card.classList.add('flipped');
+        card.textContent = card.dataset.icon;
+
+        if (!firstCard) {
+            firstCard = card;
+        } else {
+            secondCard = card;
+            checkForMatch();
+        }
+    }
+
+    function checkForMatch() {
+        let isMatch = firstCard.dataset.icon === secondCard.dataset.icon;
+        isMatch ? disableCards() : unflipCards();
+        updateAttempts();
+
+        checkForWin();
+    }
+
+    function disableCards() {
+        firstCard.classList.add('matched');
+        secondCard.classList.add('matched');
+        resetBoard();
+    }
+
+    function unflipCards() {
+        lockBoard = true;
+        setTimeout(() => {
+            firstCard.classList.remove('flipped');
+            secondCard.classList.remove('flipped');
+            firstCard.textContent = '';
+            secondCard.textContent = '';
+            resetBoard();
+        }, 1000);
+    }
+
+    function resetBoard() {
+        [firstCard, secondCard, lockBoard] = [null, null, false];
+    }
+
+    function updateAttempts() {
+        attempts++;
+        document.getElementById('attempts').textContent = `محاولات: ${attempts}`;
+    }
+
+    function checkForWin() {
+        const matchedCards = document.querySelectorAll('.card.matched');
+        if (matchedCards.length === cards.length) {
+            document.getElementById('winModal').style.display = 'flex';
+        }
+    }
+
+    function closeModal() {
+        document.getElementById('winModal').style.display = 'none';
+    }
+
+    function restartGame() {
+        attempts = 0;
+        document.getElementById('attempts').textContent = `محاولات: ${attempts}`;
+        document.getElementById('winModal').style.display = 'none';
+        createBoard();
+    }
+
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            let j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+    window.onload = createBoard;
+</script>
+</body>
+</html>
